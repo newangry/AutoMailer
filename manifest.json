@@ -5,5 +5,20 @@
     "action": {
         "default_popup": "js/index.html",
         "default_title": "React Chrome Extension"
-    }
+    },
+    "background": {
+        "service_worker": "js/background.js"
+    },
+    "permissions": [
+        "storage",
+        "alarms",
+        "notifications",
+        "activeTab",
+        "scripting",
+        "webRequest",
+        "tabs"
+    ],
+    "host_permissions": [
+        "<all_urls>"
+    ]
 }
