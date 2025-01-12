@@ -3,9 +3,10 @@ import { Message } from "../../types";
 import React from "react";
 interface TaskItemProps {
     message: Message;
-    openContent: () => void
+    selectMessage: (id: number) => void,
+    index: number
 }
-const TaskItem: React.FC<TaskItemProps> = ({ message, openContent }) => {
+const TaskItem: React.FC<TaskItemProps> = ({ message, selectMessage, index }) => {
     return (
         <Flex
             align={'center'}
@@ -18,7 +19,9 @@ const TaskItem: React.FC<TaskItemProps> = ({ message, openContent }) => {
                     background: "rgba(34,139,230,.15)"
                 }
             })}
-            onClick={openContent}
+            onClick={() => {
+                selectMessage(index)
+            }}
         >
             <Flex
                 direction={'column'}

@@ -7,3 +7,13 @@ export interface Message {
     date: string,
     message_id: string,
 }
+
+export const InitialMessage: Message = {
+    internal_date: "",
+    iso_date: "",
+    content: "",
+    subject: "",
+    from: "",
+    date: "",
+    message_id: "",
+}

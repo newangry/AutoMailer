@@ -14,7 +14,7 @@ import CustomRouter from "./components/CustomRouter";
 
 function App() {
   const myTheme: MantineThemeOverride = {
-    colorScheme: "dark",
+    colorScheme: "light",
     spacing: {
       chatInputPadding: "40px",
     },
@@ -30,7 +30,7 @@ function App() {
         }}
       >
         <ColorSchemeProvider
-          colorScheme="dark"
+          colorScheme="light"
           toggleColorScheme={() => { }}
         >
           <MantineProvider theme={myTheme} withGlobalStyles withNormalizeCSS>

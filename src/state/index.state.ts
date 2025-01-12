@@ -5,7 +5,8 @@ export interface HomeInitialState {
     min_sidebar: boolean,
     deleted_source_id: string,
     deleted_brand_id: string,
-    page: string
+    page: string,
+    is_progress: boolean
 }
 
 export const initialState: HomeInitialState = {
@@ -15,7 +16,8 @@ export const initialState: HomeInitialState = {
     min_sidebar: false,
     deleted_source_id: '',
     deleted_brand_id:'',
-    page: 'task_management'
+    page: 'task_management',
+    is_progress: false
 };
 
 interface UserState {

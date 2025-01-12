@@ -1,15 +1,15 @@
 var TOKEN = null;
 var MESSAGE_HISTORY_KEY = "message_history";
-var AI_KEY = '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';
+var AI_KEY = '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';
 
 function getAuthToken(options) {
     chrome.identity.getAuthToken({ 'interactive': options.interactive }, options.callback);
 }
 
 async function getAuthTokenSilent() {
-    const response = await getResponseFromAI("Tomorrow is good for meeting I think.");
-    console.log(response);
-    return;
+    // const response = await getResponseFromAI("Tomorrow is good for meeting I think.");
+    // console.log(response);
+    // return;
     getAuthToken({
         'interactive': false,
         'callback': getAuthTokenSilentCallback,
@@ -20,7 +20,6 @@ function getAuthTokenSilentCallback(token) {
     if (chrome.runtime.lastError) {
         showAuthNotification();
     } else {
-
         TOKEN = token;
         if (TOKEN) {
             setInterval(function () { getUnreadMessages() }, 5000);
@@ -168,7 +167,7 @@ async function getResponseFromAI(message) {
         },
         body: JSON.stringify(payload),
     });
-
+    console.log(response);
     if (!response.ok) {
         throw new Error(`${response.statusText}`);
     }
