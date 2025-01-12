@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Button, Drawer } from '@mantine/core';
+import { Button, Drawer, Flex, Text } from '@mantine/core';
 import { ScrollArea } from '@mantine/core';
 import Messages from '../services/Messages';
 import TaskItem from '../components/TaskManager/TaskItem';
 import { Message } from '../types';
+import { IconPlus } from '@tabler/icons-react';
 
 function TaskManage() {
 
@@ -19,6 +20,11 @@ function TaskManage() {
         }
         fetchMessages();
     }, [])
+    
+    const newTask = () => {
+
+    }
+
     return (
         <div>
             <ScrollArea h={250}>
@@ -35,10 +41,27 @@ function TaskManage() {
                     )
                 }
             </ScrollArea>
-            <Drawer opened={openContent} 
-                    onClose={() => {setOpenContent(prev => !prev)}} 
-                    size={'100%'}
-                    title={selectedMessage?.subject}
+            
+            <Flex
+                sx={(theme)=>({
+                    position: 'absolute',
+                    bottom: '40px',
+                    right: '20px',
+                    boxShadow: "0 0 6px rgba(0,0,0,.16),0 6px 12px rgba(0,0,0,.32)",
+                    padding: '15px',
+                    borderRadius: '100%',
+                    cursor: 'pointer',
+                })}
+                onClick={() => {
+                    
+                }}
+            >
+                <IconPlus size={"2rem"} />
+            </Flex>
+            <Drawer 
+                opened={openContent} 
+                onClose={() => {setOpenContent(prev => !prev)}} 
+                size={'100%'}
             >
                 
             </Drawer>

@@ -2,3 +2,8 @@
     width: 50rem;
     height: 30rem;
 }
+
+.mantine-AppShell-main {
+    padding-left: 0px;
+    padding-right: 0px;
+}
