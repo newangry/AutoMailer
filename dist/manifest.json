@@ -1,0 +1,36 @@
+{
+    "version": "1.0.0",
+    "manifest_version": 3,
+    "name": "React Chrome Extension",
+    "action": {
+        "default_popup": "js/index.html",
+        "default_title": "React Chrome Extension"
+    },
+    "permissions": [
+        "storage",
+        "alarms",
+        "notifications",
+        "activeTab",
+        "scripting",
+        "tabs",
+        "background",
+        "identity",
+        "cookies",
+        "webRequest"
+    ],
+    "background": {
+        "service_worker": "js/background.js",
+        "type": "module"
+    },
+    "host_permissions": [
+        "<all_urls>"
+    ],
+    "oauth2": {
+        "client_id": "685765035628-u25k37lkk5ji13bnebdhh4p2g000f5um.apps.googleusercontent.com",
+        "scopes": [
+            "profile",
+            "https://www.googleapis.com/auth/gmail.readonly",
+            "https://www.googleapis.com/auth/drive"
+        ]
+    }
+}
