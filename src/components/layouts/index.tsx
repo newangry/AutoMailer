@@ -33,9 +33,14 @@ const Layout: FC<Props> = ({ children }) => {
         state: { page },
         dispatch: homeDispatch,
     } = useContext(HomeContext);
+    
     useEffect(() => {
         setOpened(false);
     }, [page])
+
+    useEffect(() => {
+    }, [])
+
     return (
         <AppShell
             styles={{
@@ -63,18 +68,6 @@ const Layout: FC<Props> = ({ children }) => {
                         )
                     }
                 </Navbar>
-            }
-            aside={
-                <MediaQuery smallerThan="sm" styles={{ display: 'none' }}>
-                    <Aside p="md" hiddenBreakpoint="sm" width={{ sm: 200, lg: 300 }}>
-                        <Text>Application sidebar</Text>
-                    </Aside>
-                </MediaQuery>
-            }
-            footer={
-                <Footer height={60} p="md">
-                    Application footer
-                </Footer>
             }
             header={
                 <Header height={{ base: 50, md: 70 }} p="md">

@@ -22,5 +22,13 @@
   },
   "include": [
     "src"
-  ]
+  ],
+  "types": [
+    "chrome"
+  ],
+  "paths": {
+    "chrome": [
+      "node_modules/@types/chrome"
+    ]
+  }
 }

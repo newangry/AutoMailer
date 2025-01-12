@@ -7,8 +7,6 @@ import {
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import Layout from "./components/layouts";
-import Setting from "./pages/Setting";
-import TaskManage from "./pages/TaskManage";
 import HomeContext from "./state/index.context";
 import { useCreateReducer } from "./hooks/useCreateReducer";
 import { HomeInitialState, initialState } from "./state/index.state";
@@ -37,13 +35,6 @@ function App() {
         >
           <MantineProvider theme={myTheme} withGlobalStyles withNormalizeCSS>
             <Layout>
-              {/* <BrowserRouter>
-              <Routes>
-                <Route path="/settings" element={<Setting />} />
-                <Route path="/task_management" element={<TaskManage />} />
-                <Route path="*" element={<Setting />} />
-              </Routes>
-            </BrowserRouter> */}
               <CustomRouter />
             </Layout>
           </MantineProvider>
