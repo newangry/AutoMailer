@@ -6,6 +6,8 @@ export interface Message {
     from: string,
     date: string,
     message_id: string,
+    schedule_date: string,
+    completed: boolean
 }
 
 export const InitialMessage: Message = {
@@ -16,4 +18,6 @@ export const InitialMessage: Message = {
     from: "",
     date: "",
     message_id: "",
+    schedule_date: "no_schedule",
+    completed: false
 }

@@ -52,3 +52,58 @@ export function getRandomDarkBackgroundColor() {
     // Return as RGB string
     return `rgb(${r}, ${g}, ${b})`;
 }
+export function reorderObjectByInternalDateDesc(items) {
+    const sortedEntries = Object.entries(items)
+        .sort(([, a], [, b]) => {
+            const dateA = new Date(a['internal_date']);
+            const dateB = new Date(b['internal_date']);
+            return dateB - dateA; // Descending order
+        });
+    return Object.fromEntries(sortedEntries);
+}
+export function formatScheduleTime(date) {
+    const inputDate = new Date(date);
+    const now = new Date();
+
+    // Format time to "11:20 AM"
+    const formatTime = (d) =>
+        d.toLocaleTimeString('en-US', { hour: 'numeric', minute: 'numeric', hour12: true });
+
+    // Calculate the difference in time
+    const diffTime = now - inputDate; // Difference in milliseconds
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    // Formatting logic
+    if (diffDays === 0 && now.getDate() === inputDate.getDate()) {
+        // Today
+        return `Today ${formatTime(inputDate)}`;
+    } else if (diffDays === 1 || (diffDays === 0 && now.getDate() !== inputDate.getDate())) {
+        // Yesterday
+        return `Yesterday ${formatTime(inputDate)}`;
+    } else if (diffDays < 7) {
+        // Within a week
+        return `${diffDays} days ago ${formatTime(inputDate)}`;
+    } else {
+        const monthsAgo = Math.floor(diffDays / 30); // Approximation
+        if (monthsAgo >= 1) {
+            return `${monthsAgo} months ago ${formatTime(inputDate)}`;
+        } else {
+            const weeksAgo = Math.floor(diffDays / 7);
+            return `${weeksAgo} weeks ago ${formatTime(inputDate)}`;
+        }
+    }
+}
+export function checkDateState(date) {
+    const inputDate = new Date(date);
+    const now = new Date();
+
+    // Remove the time part for accurate comparison by only considering the date
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const inputDay = new Date(inputDate.getFullYear(), inputDate.getMonth(), inputDate.getDate());
+
+    if (inputDay.getTime() < today.getTime()) {
+        return "Past";
+    } else {
+        return "New";
+    }
+}
