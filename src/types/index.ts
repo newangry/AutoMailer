@@ -21,3 +21,8 @@ export const InitialMessage: Message = {
     schedule_date: "no_schedule",
     completed: false
 }
+export interface CheckFilterProps {
+    label: string,
+    value: boolean,
+    name: string
+}

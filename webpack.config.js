@@ -18,16 +18,13 @@ module.exports = {
                             compilerOptions: { noEmit: false },
                         }
                     }],
-                exclude: /node_modules/,
             },
             {
-                exclude: /node_modules/,
                 test: /\.css$/i,
                 use: [
                     "style-loader",
                     "css-loader"
                 ]
-
             },
         ],
     },

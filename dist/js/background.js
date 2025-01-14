@@ -1,19 +1,25 @@
 var TOKEN = null;
 var MESSAGE_HISTORY_KEY = "message_history";
 var AI_KEY = 'AIzaSyAsHc-wvYSKoZrQr-LRqWtgow32cer7NhU';
+var NOTIFICATION_DEFAULT_PERIOD = 1000 * 5; // 5 seconds
+var SCHEDULE_SET_TIMEOUT = setTimeout(function(){}, NOTIFICATION_DEFAULT_PERIOD);
+var SCHEDULE_NOTIFICATION_OPTION = {};
+
 const BASIC_PROMPT = `
-    You are salesperson. 
-    CONTEXT: "{{CONTEXT}}"
-    DATETIME: "{{DATETIME}} "
-    Read numbers, dates, days of the week, and time in the context. For instance, if someone says, “can you follow up with me next Monday?” It sets a reminder for 8 am (in whatever time zone the user is in) for the following Monday. If someone says, “Yea, we can catch up tomorrow. How about 2 pm?” It then respnse a task/reminder for 2 pm ET for tomorrow.
-    Below are some examples.
-    1. We should be able to start to make the system understand that when DATETIME is Monday, December 23, 2024 and it says “We don’t plan to launch till the renovation is complete in Q1.” That the system can decipher that Q1 is the upcoming Q1 in 2025 and then sets  the date for the earliest time to follow up in that time frame which is January 1, 2025.
-    2. b.Another example: “We’ll circle back with you on this during reforecast season.” The system should know the time this email was sent which was on Tuesday, January 7th and should then set a forward task/reminder for June 1, 2025. This is because people reforecast usually twice a year/halfway through the year.
-    3. This example: “I am traveling for work and will not be able to connect for a few weeks” Since “a few” usually means two. I’d set this type of task for 2 weeks from this date, so if it was sent Tuesday, September 10th 2024. I’d set if for two Tuesdays in the future.
-    4. Here is an easy example. The email was sent on Thursday, Dec 19, 2024. We will set this one for 2 pm on Friday, December 20, 2024.
-    5. This one is very vague. It was received Thursday, December 19th 2024. It essentially is saying they will let us know. However, in sales you have to be proactive so I’d set a task/reminder like this for exactly a month from now. For emails like the below. Let’s set the reminders for 30-days out. 
-    6. f.Another vague example: I’d set this one for two weeks because the response was more that “his partner has been out of town” with “out of town” being the keyword. Since this is just a traveling delay. I’d set this task for 2 weeks from the date of Wednesday, December 18, 2024.
-    Please response the only datetime. If you are not sure about date in context, please answer only "no_schedule"
+You are salesperson in our company. You target  is to get schedule from context. context is the message from users in vague user's message. 
+I will provide the user's message and date that we got the user's message.
+User's message is "{{CONTEXT}}"
+Date for user's message is "{{DATETIME}}"
+Read numbers, dates, days of the week, and time in the user's message.
+There are some examples, but there are many cases as like vague user's message, 
+1. if someone says, “can you follow up with me next Monday?” It sets a reminder for 8 am (in whatever time zone the user is in) for the following Monday. If someone says, “Yea, we can catch up tomorrow. How about 2 pm?” It then schedules a task/reminder for 2 pm ET for tomorrow.
+2. If user's message is "We don’t plan to launch till the renovation is complete in Q1", If the date of got the  user's email is after 1 quarter, it should be considered as the 1st quarter of the following year and recognized as January 1 of the following year.
+3. If the message as like "We’ll circle back with you on this during reforecast season.", becase people reforecast usually twice a year/halfway through the year, you need to calcuate the next time from date got user's message.
+4. If the message as like ".“I am traveling for work and will not be able to connect for a few weeks” ",  you need to calcuate the date from date got your user's message.
+5. If  message is as like "It essentially is saying they will let us know.", you need to indicate set shedule after 1 month since date got user's message.
+6. If  message is as like "lets circle back in 8-9 months.", you can take the earliest time frame he gives us and set a note to follow up 8-months (240 days - which is 30 days x 8) since date got user's message.
+7. If you dected shedule is in holiday, you need to set the schedule again the next day.
+Please must answer only you detected sheduled. If you are not sure about date in context, Please must answer only "no_schedule"
 `;
 
 function getAuthToken(options) {
@@ -21,8 +27,6 @@ function getAuthToken(options) {
 }
 
 async function getAuthTokenSilent() {
-
-    // clearStorage();
     getAuthToken({
         'interactive': false,
         'callback': getAuthTokenSilentCallback,
@@ -68,7 +72,9 @@ function createBasicNotification(options) {
         'message': options.message,
         'isClickable': true,
     };
-    chrome.notifications.create(options.id, notificationOptions, function (notificationId) { });
+    chrome.notifications.create(options.id, notificationOptions, function (notificationId) { 
+        console.log(notificationId);
+    });
 }
 
 async function getUnreadMessages() {
@@ -83,15 +89,13 @@ async function getUnreadMessages() {
             const result = await Promise.all(promises);
             let message_history = await getStorageData(MESSAGE_HISTORY_KEY);
             let is_updated = false;
-
-            for(let k = 0; k < result.length; k++) {
+            for (let k = 0; k < result.length; k++) {
                 const item = result[k];
                 if (!Object.keys(message_history).includes(item.message_id)) {
-                    // const schedule_date = await getResponseFromAI(
-                    //     BASIC_PROMPT.replace("{{CONTEXT}}", item.content).replace("{{DATETIME}}", item.date)
-                    // )
-                    // item["schedule_date"] = schedule_date;
-                    console.log(item);
+                    const schedule_date = await getResponseFromAI(
+                        BASIC_PROMPT.replace("{{CONTEXT}}", item.content).replace("{{DATETIME}}", item.date)
+                    )
+                    item["schedule_date"] = schedule_date;
                     message_history[item['message_id']] = item;
                     is_updated = true;
                 }
@@ -158,15 +162,26 @@ async function getMessages(id) {
         acc[item.name] = item.value;
         return acc;
     }, {});
-
+    let content = decodeBase64(data.payload.parts[0].body.data);
     return {
         internal_date: data.internalDate,
         iso_date: convertDateToIso(Number(data.internalDate)),
-        content: data.snippet,
+        content: content ? content : data.snippet,
         subject: converted_headers.Subject,
         from: converted_headers.From,
         date: converted_headers.Date,
-        message_id: id
+        to: converted_headers.To,
+        message_id: id,
+        notification_period: NOTIFICATION_DEFAULT_PERIOD
+    }
+}
+
+function decodeBase64(base64String) {
+    try {
+        const decodedData = atob(base64String);
+        return decodedData;
+    } catch (error) {
+        return null;
     }
 }
 
@@ -213,9 +228,6 @@ function setBadgeCount(count) {
 
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (message.action == "get_messages") {
-        // const data = await getStorageData(MESSAGE_HISTORY_KEY);
-        // console.log(data);
-        // sendResponse({data});
     }
 });
 
@@ -225,10 +237,53 @@ function setBadge(options) {
     chrome.browserAction.setTitle({ 'title': options.title });
 }
 
-async function analyseMessage() {
-    
+async function sheduleNotification() {
+    const messages = await getAvailableMessages();
+    if (Object.keys(messages).length == 0) {
+        SCHEDULE_SET_TIMEOUT = setTimeout(sheduleNotification, 5000)
+    } else {
+        SCHEDULE_NOTIFICATION_OPTION = messages[0];
+        let period = SCHEDULE_NOTIFICATION_OPTION.period ? SCHEDULE_NOTIFICATION_OPTION.period : NOTIFICATION_DEFAULT_PERIOD;
+        setTimeout(showScheduleNotification, period);         
+    }
+}
+
+
+function showScheduleNotification(latest_message) {
+    var options = {
+        'id': (new Date()).getTime().toString()+"_"+SCHEDULE_NOTIFICATION_OPTION.message_id+"_"+SCHEDULE_NOTIFICATION_OPTION.to,
+        'iconUrl': '../img/developers-logo.png',
+        'title': SCHEDULE_NOTIFICATION_OPTION.subject,
+        'message': SCHEDULE_NOTIFICATION_OPTION.content,
+    };
+    createBasicNotification(options);
+    sheduleNotification();
+}
+
+async function getAvailableMessages() {
+    const message_history = await getStorageData(MESSAGE_HISTORY_KEY);
+    const sortedEntries = Object.entries(message_history)
+        .sort(([, a], [, b]) => {
+            const dateA = new Date(a['schedule_date']);
+            const dateB = new Date(b['schedule_date']);
+            return dateA - dateB; // ASC order
+        });
+    const future_ = Object.fromEntries(sortedEntries);
+    const filtered = [];
+    Object.keys(future_).map((key) => {
+        if (!future_[key].completed) filtered.push(future_[key])
+    })
+    return filtered;
+}
+
+function notificationClicked(notificationId){
+    const message_id = notificationId.split("_")[1];
+    const user = notificationId.split("_")[2];
+    chrome.tabs.create({ url: `https://mail.google.com/mail?authuser=${user}#all/${message_id}`  });
 }
 
 getAuthTokenSilent();
-analyseMessage();
+// sheduleNotification();
+
+chrome.notifications.onClicked.addListener(notificationClicked);
 chrome.alarms.create('update-count', { 'delayInMinutes': 15, 'periodInMinutes': 15 });

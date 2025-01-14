@@ -3,10 +3,12 @@ import { Button, Drawer, Flex, Text } from '@mantine/core';
 import { ScrollArea } from '@mantine/core';
 import Messages from '../services/Messages';
 import TaskItem from '../components/TaskManager/TaskItem';
-import { InitialMessage, Message } from '../types';
+import { InitialMessage, Message, CheckFilterProps } from '../types';
 import { IconPlus } from '@tabler/icons-react';
 import Feedback from '../components/TaskManager/Feedback';
 import NewTask from '../components/TaskManager/NewTask';
+import Filter from '../components/TaskManager/Filter';
+import { updateNamedExports } from 'typescript';
 
 const messages = new Messages();
 
@@ -22,17 +24,18 @@ function TaskManage() {
     }, [])
 
     const newTask = () => {
-
+        
     }
+
     const fetchMessages = async() => {
         const message_history = await messages.getMessages();
-        console.log(message_history);
         setMessageHistory(message_history.sort((a: Message, b: Message) => {
             const dateA: any = new Date(Number(a['internal_date']));
             const dateB: any = new Date(Number(b['internal_date']));
             return dateB - dateA; // Descending order
         }))
     }
+
     const usePage = () => {
 
     }
@@ -48,12 +51,53 @@ function TaskManage() {
     const handleNewTask = () => {
 
     }
+    
+    const filterTasks = async (options: CheckFilterProps[], daterange: any) => {
+        let message_history = await messages.getMessages();
+        message_history = message_history.sort((a: Message, b: Message) => {
+            const dateA: any = new Date(Number(a['internal_date']));
+            const dateB: any = new Date(Number(b['internal_date']));
+            return dateB - dateA; // Descending order
+        });
+        let filter_by_daterange: Message[] = [];
+        // filter by date range
+        message_history.map((item: Message, index: number) => {
+            if((new Date(item.date)).getTime() <= daterange[1] && (new Date(item.date)).getTime() >= daterange[0]) {
+                filter_by_daterange.push(item);
+            }
+        });
+        console.log(daterange.getDate());
+        // filter by options
+        let filter_by_options: Message[] = [];
+        filter_by_daterange.map((item: Message, index: number) => {
+            if(options[0]['value']) { //All
+                filter_by_options.push(item)
+            } else {
+                let passed = false;
+                if( options[1]["value"] 
+                    && !item.schedule_date
+                    && item.schedule_date.indexOf("no_schedule") == -1) {
+                    passed = true;
+                }
+                if(options[2]["value"] 
+                    && item.schedule_date
+                    && item.schedule_date.indexOf("no_schedule") > -1) {
+                    passed = true;
+                }
+                if(options[3]["value"] && item.completed) {
+                    passed = true;
+                }
+                if(passed) {
+                    filter_by_options.push(item);
+                }
+            }
+        })
+        setMessageHistory(filter_by_options);
+    }
 
     const handleComplete = async (index: number) => {
         const message_id = messageHistory[index].message_id;
         const message_history = await messages.getMessages(false);
-        console.log(messageHistory);
-        console.log(message_id);
         const selected_message = message_history[message_id]; selected_message["completed"] = true;
         message_history[message_id] = selected_message;
         const stauts = await messages.saveDataStorage(message_history);
@@ -84,8 +128,21 @@ function TaskManage() {
 
     return (
         <div>
+            <Filter 
+                filterTasks={filterTasks}
+            />
             <ScrollArea h={420}>
                 {
+                    messageHistory.length == 0 ?
+                    <Flex
+                        h={'100%'}
+                        direction={'column'}
+                        align={'center'}
+                        justify={'center'}
+                    >
+                        <Text>No Tasks</Text>
+                    </Flex>
+                    :
                     messageHistory.map((message: Message, index: number) =>
                         <TaskItem
                             message={message}
@@ -104,7 +161,6 @@ function TaskManage() {
                     )
                 }
             </ScrollArea>
-
             <Flex
                 sx={(theme) => ({
                     position: 'absolute',

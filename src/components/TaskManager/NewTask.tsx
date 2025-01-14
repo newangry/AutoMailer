@@ -58,22 +58,6 @@ const NewTask: React.FC<NewTaskProps> = ({ }) => {
                         <TimeInput withSeconds w={'27%'} maw={'27%'} mx="auto" />
                     </Flex>
                 </Flex>
-                {/* <Flex
-                    gap={15}
-                    align={'center'}
-                >
-                    <IconRepeat />
-                    <NumberInput
-                        defaultValue={1}
-                        parser={(value) => value.replace(/\$\s?|(,*)/g, '')}
-                        formatter={(value) =>
-                            !Number.isNaN(parseFloat(value))
-                                ? `${value} Hours`.replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ',')
-                                : 'Hours '
-                        }
-                        withAsterisk
-                    />
-                </Flex> */}
                 <Flex
                     gap={15}
                     align={'center'}

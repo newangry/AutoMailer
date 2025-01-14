@@ -6,6 +6,11 @@
         "default_popup": "js/index.html",
         "default_title": "React Chrome Extension"
     },
+    "icons": {
+        "16": "img/developers-logo.png",
+        "48": "img/developers-logo.png",
+        "128": "img/developers-logo.png"
+    },
     "permissions": [
         "storage",
         "alarms",
