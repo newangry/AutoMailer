@@ -3,15 +3,16 @@ import { Message } from "../../types";
 import { formatDate, formatScheduleTime, checkDateState } from "../../utils/global";
 import React from "react";
 import NameIcon from "../elements/NameIcon";
-import { IconMessage } from "@tabler/icons-react";
+import { IconMessage, IconTrash } from "@tabler/icons-react";
 interface TaskItemProps {
     message: Message;
     selectMessage: (id: number) => void,
     index: number,
     feedback: (index: number) => void,
-    completedTask: (index: number) => void
+    completedTask: (index: number) => void,
+    deleteTask: (index: number) => void
 }
-const TaskItem: React.FC<TaskItemProps> = ({ message, selectMessage, index, feedback, completedTask }) => {
+const TaskItem: React.FC<TaskItemProps> = ({ message, selectMessage, index, feedback, completedTask, deleteTask }) => {
 
     const scheduleBadge = (schedule_date: string) => {
         if (!schedule_date) return <Badge color="indigo">No shedule</Badge>;
@@ -38,11 +39,13 @@ const TaskItem: React.FC<TaskItemProps> = ({ message, selectMessage, index, feed
                 borderBottom: '1px solid rgba(239,222,222)'
             })}
             gap={15}
+            align={"center"}
         >
             <Flex
                 justify={'space-between'}
                 gap={15}
                 w={'100%'}
+                align={"center"}
             >
                 <Flex
                     gap={20}
@@ -72,6 +75,14 @@ const TaskItem: React.FC<TaskItemProps> = ({ message, selectMessage, index, feed
                                 />
                             </ActionIcon>
                         </Tooltip>
+                        <Tooltip label="Delete" color="gray" position="right">
+                            <ActionIcon
+                            >
+                                <IconTrash
+                                    onClick={() => { deleteTask(index) }}
+                                />
+                            </ActionIcon>
+                        </Tooltip>
                     </Flex>
                     <Flex
                         direction={'column'}
@@ -95,7 +106,7 @@ const TaskItem: React.FC<TaskItemProps> = ({ message, selectMessage, index, feed
                             {message.subject.length > 80 ? message.subject.slice(0, 80) + "..." : message.subject}
                         </Text>
                         <Text dangerouslySetInnerHTML={{
-                            __html: message.content.length > 160 ? message.content.slice(0, 160) + "..." : message.content
+                            __html: message.content.length > 300 ? message.content.slice(0, 300) + "..." : message.content
                         }}>
                         </Text>
                     </Flex>

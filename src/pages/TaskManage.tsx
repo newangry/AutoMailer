@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { Button, Drawer, Flex, Text } from '@mantine/core';
 import { ScrollArea } from '@mantine/core';
 import Messages from '../services/Messages';
@@ -8,7 +8,7 @@ import { IconPlus } from '@tabler/icons-react';
 import Feedback from '../components/TaskManager/Feedback';
 import NewTask from '../components/TaskManager/NewTask';
 import Filter from '../components/TaskManager/Filter';
-import { updateNamedExports } from 'typescript';
+import HomeContext from '../state/index.context';
 
 const messages = new Messages();
 
@@ -18,16 +18,30 @@ function TaskManage() {
     const [openDrawer, setOpenDrawer] = useState<boolean>(false);
     const [selectedMessage, setSelectedMessage] = useState<Message>(InitialMessage);
     const [selectedPage, setSelectedPage] = useState<string>("");
+    const [daterange, setDaterange] = useState<[Date, Date]>([new Date(), addOneDay()])
+    const [updateTaskType, setUpdateTaskType] = useState< "add" | "update">("add");
+
+    const [filterOptions, setFilterOptions] = useState<CheckFilterProps[]>([
+        { label: "All", name: "all", value: true },
+        { label: "Schedule", name: "schedule", value: false },
+        { label: "No Schdule", name: "no_schedule", value: false },
+        { label: "Completed", name: "completed", value: false },
+    ])
+
+    const {
+        state: { get_data },
+        dispatch: homeDispatch,
+    } = useContext(HomeContext);
 
     useEffect(() => {
-        fetchMessages();
+        filterTasks();
     }, [])
 
-    const newTask = () => {
-        
-    }
+    useEffect(() => {
+        if(get_data) filterTasks()
+    }, [get_data])
 
-    const fetchMessages = async() => {
+    const fetchMessages = async () => {
         const message_history = await messages.getMessages();
         setMessageHistory(message_history.sort((a: Message, b: Message) => {
             const dateA: any = new Date(Number(a['internal_date']));
@@ -36,23 +50,61 @@ function TaskManage() {
         }))
     }
 
-    const usePage = () => {
-
+    function addOneDay() {
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(today.getDate() + 1);
+        return tomorrow;
     }
 
     useEffect(() => {
 
     }, [selectedPage])
 
-    const handleFeedback = () => {
+    useEffect(() => {
+        filterTasks();
+    }, [filterOptions, daterange])
 
+    const handleNewTask = async (task: Message) => {
+        const messages = new Messages();
+        const message_history = await messages.getMessages(false);
+        message_history[task.message_id] = task;
+        console.log(message_history);
+        await messages.saveDataStorage(message_history);
+        filterTasks();
+        setOpenDrawer(false);
     }
 
-    const handleNewTask = () => {
-
+    const handleFeedback = async () => {
+        
     }
-    
-    const filterTasks = async (options: CheckFilterProps[], daterange: any) => {
+
+    const handleFilterOptions = (index: number) => {
+        const check_filter = JSON.parse(JSON.stringify(filterOptions));
+        const checked = !check_filter[index]["value"];
+        check_filter[index]["value"] = checked;
+        if (index == 0 && checked) {
+            for (let k = 1; k < check_filter.length; k++) {
+                check_filter[k].value = false;
+            }
+        }
+        let check_status = false;
+        for (let k = 1; k < check_filter.length; k++) {
+            if (check_filter[k].value) check_status = true;
+        }
+        if (check_status && check_filter[0]["value"]) check_filter[0]["value"] = false;
+
+        let checked_index = 0;
+        for (let k = 0; k < check_filter.length; k++) {
+            if (check_filter[k].value) checked_index++;
+        }
+        if (checked_index == 0) {
+            check_filter[0]["value"] = true;
+        }
+        setFilterOptions(check_filter);
+    }
+
+    const filterTasks = async () => {
         let message_history = await messages.getMessages();
         message_history = message_history.sort((a: Message, b: Message) => {
             const dateA: any = new Date(Number(a['internal_date']));
@@ -62,32 +114,28 @@ function TaskManage() {
         let filter_by_daterange: Message[] = [];
         // filter by date range
         message_history.map((item: Message, index: number) => {
-            if((new Date(item.date)).getTime() <= daterange[1] && (new Date(item.date)).getTime() >= daterange[0]) {
+            if ((new Date(item.date)).getTime() <= daterange[1].getTime() && (new Date(item.date)).getTime() >= daterange[0].getTime()) {
                 filter_by_daterange.push(item);
             }
         });
-        console.log(daterange.getDate());
-        // filter by options
+
         let filter_by_options: Message[] = [];
         filter_by_daterange.map((item: Message, index: number) => {
-            if(options[0]['value']) { //All
+            if (filterOptions[0]['value']) { //All
                 filter_by_options.push(item)
             } else {
                 let passed = false;
-                if( options[1]["value"] 
-                    && !item.schedule_date
-                    && item.schedule_date.indexOf("no_schedule") == -1) {
+                if (filterOptions[1]["value"]
+                    && item.schedule_date) {
+                    if (item.schedule_date.indexOf("no_schedule") == -1) passed = true;
+                }
+                if (filterOptions[2]["value"]) {
+                    passed = item.schedule_date ? item.schedule_date.indexOf("no_schedule") > -1 ? true : false : true;
+                }
+                if (filterOptions[3]["value"] && item.completed) {
                     passed = true;
                 }
-                if(options[2]["value"] 
-                    && item.schedule_date
-                    && item.schedule_date.indexOf("no_schedule") > -1) {
-                    passed = true;
-                }
-                if(options[3]["value"] && item.completed) {
-                    passed = true;
-                }
-                if(passed) {
+                if (passed) {
                     filter_by_options.push(item);
                 }
             }
@@ -97,8 +145,10 @@ function TaskManage() {
 
     const handleComplete = async (index: number) => {
         const message_id = messageHistory[index].message_id;
+        console.log(message_id);
         const message_history = await messages.getMessages(false);
-        const selected_message = message_history[message_id]; selected_message["completed"] = true;
+        const selected_message = message_history[message_id]; 
+        selected_message["completed"] = true;
         message_history[message_id] = selected_message;
         const stauts = await messages.saveDataStorage(message_history);
         fetchMessages();
@@ -108,57 +158,77 @@ function TaskManage() {
         let component;
         switch (selectedPage) {
             case "feedback":
-                component = <Feedback 
+                component = <Feedback
                     message={selectedMessage}
                     handleFeedback={handleFeedback}
                 />
                 break;
             case "":
-                component = <NewTask 
+                component = <NewTask
                     handleNewTask={handleNewTask}
+                    task={selectedMessage}
+                    updateTaskType={updateTaskType}
                 />
                 break;
             default:
-                component = <NewTask 
-                handleNewTask={handleNewTask}
-            />
+                component = <NewTask
+                    handleNewTask={handleNewTask}
+                    updateTaskType={updateTaskType}
+                    task={selectedMessage}
+                />
         }
         return component;
     }
 
+    const deleteTask = async(index: number) => {
+        const messages = new Messages();
+        const message_history = await messages.getMessages(false);
+        const message_id = messageHistory[index].message_id;
+        delete message_history[message_id];
+        await messages.saveDataStorage(message_history);
+        filterTasks();
+    }
+
     return (
         <div>
-            <Filter 
-                filterTasks={filterTasks}
+            <Filter
+                handleFilterOptions={handleFilterOptions}
+                filterOptions={filterOptions}
+                daterange={daterange}
+                changeDaterang={(daterange_) => {setDaterange(daterange_)}}
             />
             <ScrollArea h={420}>
                 {
                     messageHistory.length == 0 ?
-                    <Flex
-                        h={'100%'}
-                        direction={'column'}
-                        align={'center'}
-                        justify={'center'}
-                    >
-                        <Text>No Tasks</Text>
-                    </Flex>
-                    :
-                    messageHistory.map((message: Message, index: number) =>
-                        <TaskItem
-                            message={message}
-                            index={index}
-                            feedback={(index) => {
-                                setSelectedPage("feedback");
-                                setOpenDrawer(prev => !prev);
-                                setSelectedMessage(messageHistory[index])
-                            }}
-                            completedTask={(index) => { handleComplete(index)}}
-                            selectMessage={(index) => {
-                                setOpenDrawer(prev => !prev);
-                                setSelectedMessage(messageHistory[index])
-                            }}
-                        />
-                    )
+                        <Flex
+                            h={'100%'}
+                            direction={'column'}
+                            align={'center'}
+                            justify={'center'}
+                        >
+                            <Text>No Tasks</Text>
+                        </Flex>
+                        :
+                        messageHistory.map((message: Message, index: number) =>
+                            <TaskItem
+                                message={message}
+                                index={index}
+                                feedback={(index) => {
+                                    setSelectedPage("feedback");
+                                    setOpenDrawer(prev => !prev);
+                                    setSelectedMessage(messageHistory[index])
+                                }}
+                                completedTask={(index) => { handleComplete(index) }}
+                                selectMessage={(index) => {
+                                    setOpenDrawer(prev => !prev);
+                                    setUpdateTaskType("update");
+                                    setSelectedMessage(messageHistory[index])
+                                }}
+                                deleteTask={(index: number) => {
+                                    deleteTask(index)
+                                }}
+                            />
+                        )
                 }
             </ScrollArea>
             <Flex
@@ -175,6 +245,7 @@ function TaskManage() {
                 onClick={() => {
                     setOpenDrawer(true);
                     setSelectedPage("new_task");
+                    setUpdateTaskType("add");
                 }}
             >
                 <IconPlus size={"2rem"} />

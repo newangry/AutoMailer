@@ -6,7 +6,7 @@ class Messages {
             data
         );
         if( is_array ) return converted;
-        else return data;
+        return data;
     }
     
     getArrayMessageList = (messages) => {

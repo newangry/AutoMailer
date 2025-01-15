@@ -27,6 +27,7 @@ function getAuthToken(options) {
 }
 
 async function getAuthTokenSilent() {
+    // clearStorage();
     getAuthToken({
         'interactive': false,
         'callback': getAuthTokenSilentCallback,
@@ -92,10 +93,10 @@ async function getUnreadMessages() {
             for (let k = 0; k < result.length; k++) {
                 const item = result[k];
                 if (!Object.keys(message_history).includes(item.message_id)) {
-                    const schedule_date = await getResponseFromAI(
-                        BASIC_PROMPT.replace("{{CONTEXT}}", item.content).replace("{{DATETIME}}", item.date)
-                    )
-                    item["schedule_date"] = schedule_date;
+                    // const schedule_date = await getResponseFromAI(
+                    //     BASIC_PROMPT.replace("{{CONTEXT}}", item.content).replace("{{DATETIME}}", item.date)
+                    // )
+                    // item["schedule_date"] = schedule_date;
                     message_history[item['message_id']] = item;
                     is_updated = true;
                 }

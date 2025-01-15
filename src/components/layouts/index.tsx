@@ -33,7 +33,7 @@ const Layout: FC<Props> = ({ children }) => {
     const theme = useMantineTheme();
     const [opened, setOpened] = useState(false);
     const {
-        state: { page, is_progress },
+        state: { page, is_progress, get_data },
         dispatch: homeDispatch,
     } = useContext(HomeContext);
 
@@ -81,7 +81,10 @@ const Layout: FC<Props> = ({ children }) => {
                                             <IconRefresh
                                                 size="1.6rem"
                                                 onClick={() => {
-                                                    
+                                                    homeDispatch({
+                                                        "field": "get_data",
+                                                        "value": true
+                                                    })
                                                 }}
                                             />
                                         </ActionIcon>

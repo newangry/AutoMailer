@@ -6,7 +6,8 @@ export interface HomeInitialState {
     deleted_source_id: string,
     deleted_brand_id: string,
     page: string,
-    is_progress: boolean
+    is_progress: boolean,
+    get_data: boolean
 }
 
 export const initialState: HomeInitialState = {
@@ -17,7 +18,8 @@ export const initialState: HomeInitialState = {
     deleted_source_id: '',
     deleted_brand_id:'',
     page: 'task_management',
-    is_progress: false
+    is_progress: false,
+    get_data: false
 };
 
 interface UserState {
