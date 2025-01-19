@@ -42,7 +42,9 @@ const Layout: FC<Props> = ({ children }) => {
     }, [page])
 
     useEffect(() => {
-
+        chrome.runtime.sendMessage({ action: "check_token" }, (response) => {
+            
+        });
     }, [])
 
     return (

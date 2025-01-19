@@ -15,15 +15,15 @@ interface TaskItemProps {
 const TaskItem: React.FC<TaskItemProps> = ({ message, selectMessage, index, feedback, completedTask, deleteTask }) => {
 
     const scheduleBadge = (schedule_date: string) => {
-        if (!schedule_date) return <Badge color="indigo">No shedule</Badge>;
-        if (schedule_date.indexOf("no_shedule")) return <Badge color="indigo">No shedule</Badge>;
+        console.log(schedule_date);
+        if (schedule_date.indexOf("no_shedule") > -1) return <Badge color="indigo">No shedule</Badge>;
         const form_date = formatScheduleTime(schedule_date);
         let color = "blue";
         if (form_date.indexOf("Today") > -1) {
             color = "red"
         }
         return <Badge color={color}>
-            {form_date}
+            schedule: { new Date(schedule_date).toDateString() }
         </Badge>
     }
 

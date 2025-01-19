@@ -1,15 +1,16 @@
 var TOKEN = null;
 var MESSAGE_HISTORY_KEY = "message_history";
-var AI_KEY = 'AIzaSyAsHc-wvYSKoZrQr-LRqWtgow32cer7NhU';
-var NOTIFICATION_DEFAULT_PERIOD = 1000 * 5; // 5 seconds
+var TOKEN_KEY = "token";
+var AI_KEY = 'AIzaSyCQrKcGYyeIlspCT7N5gYriPyev8OIE-GM';
+var NOTIFICATION_DEFAULT_PERIOD = 1000 * 60 * 5; // 5 minutes
 var SCHEDULE_SET_TIMEOUT = setTimeout(function(){}, NOTIFICATION_DEFAULT_PERIOD);
 var SCHEDULE_NOTIFICATION_OPTION = {};
 
 const BASIC_PROMPT = `
 You are salesperson in our company. You target  is to get schedule from context. context is the message from users in vague user's message. 
 I will provide the user's message and date that we got the user's message.
-User's message is "{{CONTEXT}}"
-Date for user's message is "{{DATETIME}}"
+User's message is "{{CONTEXT}}" 
+Date for user's message is "{{DATETIME}}" 
 Read numbers, dates, days of the week, and time in the user's message.
 There are some examples, but there are many cases as like vague user's message, 
 1. if someone says, “can you follow up with me next Monday?” It sets a reminder for 8 am (in whatever time zone the user is in) for the following Monday. If someone says, “Yea, we can catch up tomorrow. How about 2 pm?” It then schedules a task/reminder for 2 pm ET for tomorrow.
@@ -19,7 +20,7 @@ There are some examples, but there are many cases as like vague user's message,
 5. If  message is as like "It essentially is saying they will let us know.", you need to indicate set shedule after 1 month since date got user's message.
 6. If  message is as like "lets circle back in 8-9 months.", you can take the earliest time frame he gives us and set a note to follow up 8-months (240 days - which is 30 days x 8) since date got user's message.
 7. If you dected shedule is in holiday, you need to set the schedule again the next day.
-Please must answer only you detected sheduled. If you are not sure about date in context, Please must answer only "no_schedule"
+I don't need your description and please must answer only you detected sheduled with internal date. If you are not sure about date in context, Please must answer only as like "no_schedule" 
 `;
 
 function getAuthToken(options) {
@@ -27,12 +28,51 @@ function getAuthToken(options) {
 }
 
 async function getAuthTokenSilent() {
-    // clearStorage();
     getAuthToken({
-        'interactive': false,
+        'interactive': true,
         'callback': getAuthTokenSilentCallback,
     });
 }
+
+// function getAuthTokenInteractive() {
+//     getAuthToken({
+//         'interactive': true,
+//         'callback': getAuthTokenInteractiveCallback,
+//     });
+// }
+
+// function getAuthTokenInteractiveCallback(token) {
+//     // Catch chrome error if user is not authorized.
+//     if (chrome.runtime.lastError) {
+//         showAuthNotification();
+//     } else {
+//         TOKEN = token;
+//         if (TOKEN) {
+//             getUnreadMessages();
+//             setInterval(function () { getUnreadMessages() }, 5000 * 10);
+//         }
+//     }
+// }
+
+// function updateLabelCount(token) {
+//     get({
+//         'url': 'https://www.googleapis.com/gmail/v1/users/me/labels/INBOX',
+//         'callback': updateLabelCountCallback,
+//         'token': token,
+//     });
+// }
+
+// function updateLabelCountCallback(label) {
+//     setBadgeCount(label.threadsUnread);
+// }
+
+// function getProfile(token) {
+//     get({
+//         'url': 'https://www.googleapis.com/plus/v1/people/me',
+//         'callback': getProfileCallback,
+//         'token': token,
+//     });
+// }
 
 function clearStorage() {
     chrome.storage.local.clear(() => {
@@ -43,14 +83,17 @@ function clearStorage() {
         }
     });
 }
-function getAuthTokenSilentCallback(token) {
+async function getAuthTokenSilentCallback(token) {
+    
     if (chrome.runtime.lastError) {
         showAuthNotification();
     } else {
         TOKEN = token;
+        saveTokenToStorage(token);
+        await saveMessageHistoryToStorage
         if (TOKEN) {
             getUnreadMessages();
-            setInterval(function () { getUnreadMessages() }, 5000);
+            setInterval(function () { getUnreadMessages() }, 5000 * 10);
         }
     }
 }
@@ -74,7 +117,10 @@ function createBasicNotification(options) {
         'isClickable': true,
     };
     chrome.notifications.create(options.id, notificationOptions, function (notificationId) { 
-        console.log(notificationId);
+        console.log(options)
+        if(notificationId == 'start-auth') {
+            // getAuthTokenInteractive();
+        }
     });
 }
 
@@ -93,10 +139,10 @@ async function getUnreadMessages() {
             for (let k = 0; k < result.length; k++) {
                 const item = result[k];
                 if (!Object.keys(message_history).includes(item.message_id)) {
-                    // const schedule_date = await getResponseFromAI(
-                    //     BASIC_PROMPT.replace("{{CONTEXT}}", item.content).replace("{{DATETIME}}", item.date)
-                    // )
-                    // item["schedule_date"] = schedule_date;
+                    const schedule_date = await getResponseFromAI(
+                        BASIC_PROMPT.replace("{{CONTEXT}}", item.content).replace("{{DATETIME}}", item.date)
+                    )
+                    item["schedule_date"] = schedule_date.replace("\n", "");
                     message_history[item['message_id']] = item;
                     is_updated = true;
                 }
@@ -130,9 +176,9 @@ const convertDateToIso = (internal_date) => {
         minute: "2-digit", // Two-digit minute
         hour12: true       // 12-hour clock (AM/PM)
     });
-
     return formattedDate;
 }
+
 const getStorageData = async (key) => {
     return toPromise((resolve, reject) => {
         chrome.storage.local.get([key], (result) => {
@@ -150,6 +196,16 @@ const saveMessageHistoryToStorage = (messages) => {
             if (chrome.runtime.lastError)
                 reject(chrome.runtime.lastError);
             resolve(messages);
+        });
+    });
+}
+
+const saveTokenToStorage = (token) => {
+    return toPromise((resolve, reject) => {
+        chrome.storage.local.set({ [TOKEN_KEY]: token }, () => {
+            if (chrome.runtime.lastError)
+                reject(chrome.runtime.lastError);
+            resolve(token);
         });
     });
 }
@@ -201,15 +257,13 @@ async function getResponseFromAI(message) {
         body: JSON.stringify({ contents: payload }),
     });
     if (!response.ok) {
-        throw new Error(`${response.statusText}`);
+        // throw new Error(`${response}`);
+        console.log("Error");
+        return "no_schedule";
     }
 
     const data = await response.json();
     return data.candidates[0].content.parts[0].text;
-}
-
-function updateLabelCountCallback(label) {
-    setBadgeCount(label.threadsUnread);
 }
 
 function setBadgeCount(count) {
@@ -229,6 +283,12 @@ function setBadgeCount(count) {
 
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
     if (message.action == "get_messages") {
+
+    } else if (message.action == "check_token") {
+        const token = await getStorageData(TOKEN_KEY);
+        if(!token) {
+            getAuthTokenSilent();
+        }
     }
 });
 
@@ -250,7 +310,7 @@ async function sheduleNotification() {
 }
 
 
-function showScheduleNotification(latest_message) {
+function showScheduleNotification() {
     var options = {
         'id': (new Date()).getTime().toString()+"_"+SCHEDULE_NOTIFICATION_OPTION.message_id+"_"+SCHEDULE_NOTIFICATION_OPTION.to,
         'iconUrl': '../img/developers-logo.png',
@@ -284,7 +344,6 @@ function notificationClicked(notificationId){
 }
 
 getAuthTokenSilent();
-// sheduleNotification();
-
+sheduleNotification();
 chrome.notifications.onClicked.addListener(notificationClicked);
 chrome.alarms.create('update-count', { 'delayInMinutes': 15, 'periodInMinutes': 15 });
