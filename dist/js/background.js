@@ -130,6 +130,8 @@ async function getUnreadMessages() {
         headers: { 'Authorization': "Bearer " + TOKEN },
     }).then((json) => json.json())
         .then(async (data) => {
+            if(!Object.keys(data).includes("messages")) return;
+            console.log(data);
             data.messages.map((item) => {
                 promises.push(getMessages(item.id))
             })
