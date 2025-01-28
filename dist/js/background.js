@@ -284,14 +284,14 @@ function setBadgeCount(count) {
 
 
 chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-    if (message.action == "get_messages") {
+    // if (message.action == "get_messages") {
 
-    } else if (message.action == "check_token") {
-        const token = await getStorageData(TOKEN_KEY);
-        if(!token) {
-            getAuthTokenSilent();
-        }
-    }
+    // } else if (message.action == "check_token") {
+    //     const token = await getStorageData(TOKEN_KEY);
+    //     if(!token) {
+    //         getAuthTokenSilent();
+    //     }
+    // }
 });
 
 function setBadge(options) {
