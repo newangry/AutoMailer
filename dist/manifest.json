@@ -21,6 +21,8 @@
         "background",
         "identity",
         "cookies",
+        "downloads",
+        "downloads.shelf",
         "webRequest"
     ],
     "background": {
@@ -31,7 +33,7 @@
         "<all_urls>"
     ],
     "oauth2": {
-        "client_id": "685765035628-u25k37lkk5ji13bnebdhh4p2g000f5um.apps.googleusercontent.com",
+        "client_id": "685765035628-2hhk926u5ufk2m5e0onmg1lgpgajof6f.apps.googleusercontent.com",
         "scopes": [
             "profile",
             "https://www.googleapis.com/auth/gmail.readonly",

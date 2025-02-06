@@ -1,7 +1,7 @@
 var TOKEN = null;
 var MESSAGE_HISTORY_KEY = "message_history";
 var TOKEN_KEY = "token";
-var AI_KEY = 'AIzaSyCQrKcGYyeIlspCT7N5gYriPyev8OIE-GM';
+var AI_KEY = 'AIzaSyDQhAj0rn6lztmjBw7GZ7bxYzk87ObT6gI';
 var NOTIFICATION_DEFAULT_PERIOD = 1000 * 60 * 5; // 5 minutes
 var SCHEDULE_SET_TIMEOUT = setTimeout(function(){}, NOTIFICATION_DEFAULT_PERIOD);
 var SCHEDULE_NOTIFICATION_OPTION = {};
@@ -20,6 +20,8 @@ There are some examples, but there are many cases as like vague user's message,
 5. If  message is as like "It essentially is saying they will let us know.", you need to indicate set shedule after 1 month since date got user's message.
 6. If  message is as like "lets circle back in 8-9 months.", you can take the earliest time frame he gives us and set a note to follow up 8-months (240 days - which is 30 days x 8) since date got user's message.
 7. If you dected shedule is in holiday, you need to set the schedule again the next day.
+
+And you detected multple date, you need to make the dates array as like this [date1, date2, ...].
 I don't need your description and please must answer only you detected sheduled with internal date. If you are not sure about date in context, Please must answer only as like "no_schedule" 
 `;
 
@@ -27,7 +29,7 @@ function getAuthToken(options) {
     chrome.identity.getAuthToken({ 'interactive': options.interactive }, options.callback);
 }
 
-async function getAuthTokenSilent() {
+async function getAuthTokenSilent() {    
     getAuthToken({
         'interactive': true,
         'callback': getAuthTokenSilentCallback,
@@ -84,7 +86,7 @@ function clearStorage() {
     });
 }
 async function getAuthTokenSilentCallback(token) {
-    
+    console.log(token, token);
     if (chrome.runtime.lastError) {
         showAuthNotification();
     } else {
@@ -101,7 +103,7 @@ async function getAuthTokenSilentCallback(token) {
 function showAuthNotification() {
     var options = {
         'id': 'start-auth',
-        'iconUrl': 'img/developers-logo.png',
+        'iconUrl': '../img/developers-logo.png',
         'title': 'GDE Sample: Chrome extension Google APIs',
         'message': 'Click here to authorize access to Gmail',
     };
@@ -117,7 +119,6 @@ function createBasicNotification(options) {
         'isClickable': true,
     };
     chrome.notifications.create(options.id, notificationOptions, function (notificationId) { 
-        console.log(options)
         if(notificationId == 'start-auth') {
             // getAuthTokenInteractive();
         }
@@ -131,20 +132,26 @@ async function getUnreadMessages() {
     }).then((json) => json.json())
         .then(async (data) => {
             if(!Object.keys(data).includes("messages")) return;
-            console.log(data);
             data.messages.map((item) => {
                 promises.push(getMessages(item.id))
             })
+            console.log(data);
             const result = await Promise.all(promises);
             let message_history = await getStorageData(MESSAGE_HISTORY_KEY);
             let is_updated = false;
             for (let k = 0; k < result.length; k++) {
                 const item = result[k];
                 if (!Object.keys(message_history).includes(item.message_id)) {
-                    const schedule_date = await getResponseFromAI(
+                    let schedule_date = await getResponseFromAI(
                         BASIC_PROMPT.replace("{{CONTEXT}}", item.content).replace("{{DATETIME}}", item.date)
                     )
-                    item["schedule_date"] = schedule_date.replace("\n", "");
+                    schedule_date = schedule_date.replace("\n", "");
+                    try{
+                        schedule_date = JSON.parse(schedule_date)
+                    }catch(e) {
+
+                    }
+                    item["schedule_date"] = schedule_date;
                     message_history[item['message_id']] = item;
                     is_updated = true;
                 }
@@ -259,12 +266,14 @@ async function getResponseFromAI(message) {
         body: JSON.stringify({ contents: payload }),
     });
     if (!response.ok) {
+        console.log(response);
         // throw new Error(`${response}`);
         console.log("Error");
         return "no_schedule";
     }
 
     const data = await response.json();
+    console.log(data);
     return data.candidates[0].content.parts[0].text;
 }
 
@@ -340,9 +349,14 @@ async function getAvailableMessages() {
 }
 
 function notificationClicked(notificationId){
-    const message_id = notificationId.split("_")[1];
-    const user = notificationId.split("_")[2];
-    chrome.tabs.create({ url: `https://mail.google.com/mail?authuser=${user}#all/${message_id}`  });
+    console.log(notificationId);
+    if(notificationId == "start-auth") {
+        getAuthTokenSilent();
+    } else {
+        const message_id = notificationId.split("_")[1];
+        const user = notificationId.split("_")[2];
+        chrome.tabs.create({ url: `https://mail.google.com/mail?authuser=${user}#all/${message_id}`  });
+    }
 }
 
 getAuthTokenSilent();

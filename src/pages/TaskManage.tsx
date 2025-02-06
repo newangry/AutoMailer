@@ -18,7 +18,7 @@ function TaskManage() {
     const [openDrawer, setOpenDrawer] = useState<boolean>(false);
     const [selectedMessage, setSelectedMessage] = useState<Message>(InitialMessage);
     const [selectedPage, setSelectedPage] = useState<string>("");
-    const [daterange, setDaterange] = useState<[Date, Date]>([new Date(), addOneDay()])
+    const [daterange, setDaterange] = useState<[Date, Date]>([getOffsetDate(-1), getOffsetDate(1)])
     const [updateTaskType, setUpdateTaskType] = useState< "add" | "update">("add");
 
     const [filterOptions, setFilterOptions] = useState<CheckFilterProps[]>([
@@ -50,12 +50,13 @@ function TaskManage() {
         }))
     }
 
-    function addOneDay() {
+    function getOffsetDate(offset: number) {
         const today = new Date();
         const tomorrow = new Date(today);
-        tomorrow.setDate(today.getDate() + 1);
+        tomorrow.setDate(today.getDate() + offset);
         return tomorrow;
     }
+
 
     useEffect(() => {
 
@@ -69,7 +70,6 @@ function TaskManage() {
         const messages = new Messages();
         const message_history = await messages.getMessages(false);
         message_history[task.message_id] = task;
-        console.log(message_history);
         await messages.saveDataStorage(message_history);
         filterTasks();
         setOpenDrawer(false);
@@ -111,6 +111,8 @@ function TaskManage() {
             const dateB: any = new Date(Number(b['internal_date']));
             return dateB - dateA; // Descending order
         });
+
+        
         let filter_by_daterange: Message[] = [];
         // filter by date range
         message_history.map((item: Message, index: number) => {
@@ -140,12 +142,12 @@ function TaskManage() {
                 }
             }
         })
+        console.log(filter_by_options);
         setMessageHistory(filter_by_options);
     }
 
     const handleComplete = async (index: number) => {
         const message_id = messageHistory[index].message_id;
-        console.log(message_id);
         const message_history = await messages.getMessages(false);
         const selected_message = message_history[message_id]; 
         selected_message["completed"] = true;

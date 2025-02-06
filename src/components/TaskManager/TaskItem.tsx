@@ -15,8 +15,10 @@ interface TaskItemProps {
 const TaskItem: React.FC<TaskItemProps> = ({ message, selectMessage, index, feedback, completedTask, deleteTask }) => {
 
     const scheduleBadge = (schedule_date: string) => {
-        console.log(schedule_date);
-        if (schedule_date.indexOf("no_shedule") > -1) return <Badge color="indigo">No shedule</Badge>;
+        if(Array.isArray(schedule_date)) {
+            schedule_date = schedule_date[0];    
+        }
+        if (schedule_date.indexOf("no_schedule") > -1) return <Badge color="indigo">No shedule</Badge>;
         const form_date = formatScheduleTime(schedule_date);
         let color = "blue";
         if (form_date.indexOf("Today") > -1) {

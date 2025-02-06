@@ -21,8 +21,6 @@
         "background",
         "identity",
         "cookies",
-        "downloads",
-        "downloads.shelf",
         "webRequest"
     ],
     "background": {
