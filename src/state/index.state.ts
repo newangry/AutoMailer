@@ -7,7 +7,7 @@ export interface HomeInitialState {
     deleted_brand_id: string,
     page: string,
     is_progress: boolean,
-    get_data: boolean
+    get_data: number
 }
 
 export const initialState: HomeInitialState = {
@@ -19,7 +19,7 @@ export const initialState: HomeInitialState = {
     deleted_brand_id:'',
     page: 'task_management',
     is_progress: false,
-    get_data: false
+    get_data: 0
 };
 
 interface UserState {

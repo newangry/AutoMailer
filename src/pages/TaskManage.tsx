@@ -106,6 +106,7 @@ function TaskManage() {
 
     const filterTasks = async () => {
         let message_history = await messages.getMessages();
+        console.log(message_history);
         message_history = message_history.sort((a: Message, b: Message) => {
             const dateA: any = new Date(Number(a['internal_date']));
             const dateB: any = new Date(Number(b['internal_date']));

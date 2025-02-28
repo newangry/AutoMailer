@@ -19,10 +19,11 @@ There are some examples, but there are many cases as like vague user's message,
 4. If the message as like ".“I am traveling for work and will not be able to connect for a few weeks” ",  you need to calcuate the date from date got your user's message.
 5. If  message is as like "It essentially is saying they will let us know.", you need to indicate set shedule after 1 month since date got user's message.
 6. If  message is as like "lets circle back in 8-9 months.", you can take the earliest time frame he gives us and set a note to follow up 8-months (240 days - which is 30 days x 8) since date got user's message.
-7. If you dected shedule is in holiday, you need to set the schedule again the next day.
+7. If the message is as like "If may be able to swing here would be some date", you should detect the some date in this sentences.
+8. If you dected shedule is in holiday, you need to set the schedule again the next day.
 
 And you detected multple date, you need to make the dates array as like this [date1, date2, ...].
-I don't need your description and please must answer only you detected sheduled with internal date. If you are not sure about date in context, Please must answer only as like "no_schedule" 
+I don't need your description and please must answer only you detected sheduled with internal date. If you are not sure about date in context, Please must answer only as like "no_schedule"
 `;
 
 function getAuthToken(options) {
@@ -86,7 +87,6 @@ function clearStorage() {
     });
 }
 async function getAuthTokenSilentCallback(token) {
-    console.log(token, token);
     if (chrome.runtime.lastError) {
         showAuthNotification();
     } else {
@@ -95,7 +95,7 @@ async function getAuthTokenSilentCallback(token) {
         await saveMessageHistoryToStorage
         if (TOKEN) {
             getUnreadMessages();
-            setInterval(function () { getUnreadMessages() }, 5000 * 10);
+            setInterval(function () { getUnreadMessages() }, 2000);
         }
     }
 }
@@ -103,7 +103,7 @@ async function getAuthTokenSilentCallback(token) {
 function showAuthNotification() {
     var options = {
         'id': 'start-auth',
-        'iconUrl': '../img/developers-logo.png',
+        'iconUrl': './img/developers-logo.png',
         'title': 'GDE Sample: Chrome extension Google APIs',
         'message': 'Click here to authorize access to Gmail',
     };
@@ -135,7 +135,6 @@ async function getUnreadMessages() {
             data.messages.map((item) => {
                 promises.push(getMessages(item.id))
             })
-            console.log(data);
             const result = await Promise.all(promises);
             let message_history = await getStorageData(MESSAGE_HISTORY_KEY);
             let is_updated = false;
@@ -192,9 +191,16 @@ const getStorageData = async (key) => {
     return toPromise((resolve, reject) => {
         chrome.storage.local.get([key], (result) => {
             if (chrome.runtime.lastError)
-                reject(chrome.runtime.lastError);
-            const researches = result[key] ?? {};
-            resolve(researches);
+            {
+                resolve({})
+            }
+                // reject(chrome.runtime.lastError);
+            if(result && Object.keys(result).includes(key)) {
+                const researches = result[key] ?? {};
+                resolve(researches);
+            }  else {
+                resolve({});
+            }
         });
     });
 }
@@ -224,6 +230,7 @@ async function getMessages(id) {
         headers: { 'Authorization': "Bearer " + TOKEN },
     });
     const data = await res.json();
+    console.log(data);
     const converted_headers = data.payload.headers.reduce((acc, item) => {
         acc[item.name] = item.value;
         return acc;
@@ -291,18 +298,6 @@ function setBadgeCount(count) {
     });
 }
 
-
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
-    // if (message.action == "get_messages") {
-
-    // } else if (message.action == "check_token") {
-    //     const token = await getStorageData(TOKEN_KEY);
-    //     if(!token) {
-    //         getAuthTokenSilent();
-    //     }
-    // }
-});
-
 function setBadge(options) {
     chrome.browserAction.setBadgeText({ 'text': options.text });
     chrome.browserAction.setBadgeBackgroundColor({ 'color': options.color });
@@ -322,14 +317,18 @@ async function sheduleNotification() {
 
 
 function showScheduleNotification() {
-    var options = {
-        'id': (new Date()).getTime().toString()+"_"+SCHEDULE_NOTIFICATION_OPTION.message_id+"_"+SCHEDULE_NOTIFICATION_OPTION.to,
-        'iconUrl': '../img/developers-logo.png',
-        'title': SCHEDULE_NOTIFICATION_OPTION.subject,
-        'message': SCHEDULE_NOTIFICATION_OPTION.content,
-    };
-    createBasicNotification(options);
-    sheduleNotification();
+    try {
+        var options = {
+            'id': (new Date()).getTime().toString()+"_"+SCHEDULE_NOTIFICATION_OPTION.message_id+"_"+SCHEDULE_NOTIFICATION_OPTION.to,
+            'iconUrl': './img/developers-logo.png',
+            'title': SCHEDULE_NOTIFICATION_OPTION.subject,
+            'message': SCHEDULE_NOTIFICATION_OPTION.content,
+        };
+        createBasicNotification(options);
+        sheduleNotification();
+    } catch(e) {
+        console.log(e)
+    }
 }
 
 async function getAvailableMessages() {
@@ -363,3 +362,10 @@ getAuthTokenSilent();
 sheduleNotification();
 chrome.notifications.onClicked.addListener(notificationClicked);
 chrome.alarms.create('update-count', { 'delayInMinutes': 15, 'periodInMinutes': 15 });
+chrome.action.setIcon({
+    path: {
+      "16": "../img/developers-logo.png",
+      "48": "../img/developers-logo.png",
+      "128": "../img/developers-logo.png"
+    }
+  });

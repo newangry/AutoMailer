@@ -42,9 +42,9 @@ const Layout: FC<Props> = ({ children }) => {
     }, [page])
 
     useEffect(() => {
-        chrome.runtime.sendMessage({ action: "check_token" }, (response) => {
+        // chrome.runtime.sendMessage({ action: "check_token" }, (response) => {
             
-        });
+        // });
     }, [])
 
     return (
@@ -85,7 +85,7 @@ const Layout: FC<Props> = ({ children }) => {
                                                 onClick={() => {
                                                     homeDispatch({
                                                         "field": "get_data",
-                                                        "value": true
+                                                        "value": get_data + 1
                                                     })
                                                 }}
                                             />

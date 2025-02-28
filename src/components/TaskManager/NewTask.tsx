@@ -135,6 +135,7 @@ const NewTask: React.FC<NewTaskProps> = ({ handleNewTask, updateTaskType, task }
                             setForm(form_);
                         }}
                         value={form.content}
+                        h={250}
                     />
                 </Flex>
                 <Button
